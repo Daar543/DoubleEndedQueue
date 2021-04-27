@@ -155,8 +155,6 @@ namespace DoubleEndedQueue
             }
             this[index] = item;
             return;
-
-            throw new NotImplementedException();
         }
 
         public T PopBack()
