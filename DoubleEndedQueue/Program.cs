@@ -215,7 +215,14 @@ namespace DoubleEndedQueue
             }
             else
             {
-                throw new NotImplementedException();
+                T item = data[firstBlock][firstIndex];
+                firstBlock += 1;
+                firstIndex = 00;
+                if (firstBlock > (lastBlock / resizeFactor / resizeFactor))
+                {
+                    ShrinkBack();
+                }
+                return item;
             }
         }
 
@@ -250,7 +257,13 @@ namespace DoubleEndedQueue
             }
             else //Create a new block
             {
-                throw new NotImplementedException();
+                if (firstBlock - 1 < 0)
+                {
+                    ExpandBack();
+                }
+                data[--firstBlock] = new T[blockSize];
+                data[firstBlock][blockSize-1] = item;
+                firstIndex = blockSize-1;
             }
             return;
         }
