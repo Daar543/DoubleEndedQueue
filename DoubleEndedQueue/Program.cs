@@ -19,7 +19,7 @@ namespace DoubleEndedQueue
         private int lastIndex = -1;
         private int firstBlock = 0;
         private int lastBlock = 0;
-        private int blockCount = 1;
+        private int blockCount { get => data.Length; }
         private float resizeFactor = 2;
 
         private T[][] data;
@@ -43,11 +43,32 @@ namespace DoubleEndedQueue
 
             return firstBlock + addBlocks + next;
         }
-        private void Expand()
+        private void ExpandFront()
         {
+            T[][] newArr = new T[(int)((blockCount - firstBlock) * resizeFactor)+firstBlock][]; //Only the part on "right" gets resized
+            for(int i = firstBlock; i<=lastBlock; ++i)
+            {
+                newArr[i] = data[i];
+            }
+            this.data = newArr;
+            return;
+        }
+        private void ExpandBack()
+        {
+
             throw new NotImplementedException();
         }
-        private void Shrink()
+        private void ShrinkFront()
+        {
+            T[][] newArr = new T[(int)((blockCount - firstBlock) / resizeFactor) + firstBlock][]; //Only the part on "right" gets resized
+            for (int i = firstBlock; i <= lastBlock; ++i)
+            {
+                newArr[i] = data[i];
+            }
+            this.data = newArr;
+            return;
+        }
+        private void ShrinkBack()
         {
             throw new NotImplementedException();
         }
@@ -100,11 +121,11 @@ namespace DoubleEndedQueue
             }
             else //Create a new block
             {
-                lastBlock += 1;
-                if (lastBlock == blockCount)
+                if (lastBlock+1 == blockCount)
                 {
-                    Expand();
+                    ExpandFront();
                 }
+                data[++lastBlock] = new T[blockSize];
                 data[lastBlock][0] = item;
                 lastIndex = 0;
             }
@@ -130,7 +151,6 @@ namespace DoubleEndedQueue
                     return true;
             }
             return false;
-            throw new NotImplementedException();
         }
 
         public void CopyTo(T[] array, int arrayIndex)
@@ -213,10 +233,10 @@ namespace DoubleEndedQueue
             {
                 T item = data[lastBlock][lastIndex];
                 lastBlock -= 1;
-                lastIndex = blockSize;
+                lastIndex = blockSize-1;
                 if (lastBlock < (blockCount / resizeFactor / resizeFactor))
                 {
-                    Shrink();
+                    ShrinkFront();
                 }
                 return item;
             }
@@ -301,7 +321,7 @@ namespace DoubleEndedQueue
 
 
 
-            /*Random r = new Random();
+            Random r = new Random();
             r.Next(1, 100);
 
             List<int> bmlist = new List<int>();
@@ -309,14 +329,26 @@ namespace DoubleEndedQueue
             int maxlen = 10000;
             for(int i = 0; i < maxlen; ++i)
             {
-                int randint = r.Next(0, 1000);
+                int randint = r.Next(0, 10000);
                 bmlist.Add(randint);
                 DQ.Add(randint);
             }
-
+            for(int i = maxlen; i >= maxlen/4.3; --i)
+            {
+                DQ.PopFront();
+            }
             int[] bmarray = new int[] { 7, 15, 42 };
             bmarray = bmlist.ToArray();
-            int repetitions = 100000;
+
+            /*for (int i = 0; i < bmarray.Length; ++i)
+            {
+                if (bmarray[i] != DQ[i+2])
+                    throw new Exception($"Mistake at index {i}");
+            }
+            Console.WriteLine("Collections are equal");*/
+
+
+            int repetitions = 1000;
             long accum = 0;
             Stopwatch sw = new Stopwatch();
 
@@ -346,7 +378,7 @@ namespace DoubleEndedQueue
             var e2 = sw.Elapsed;
 
             Console.WriteLine(e1);
-            Console.WriteLine(e2);*/
+            Console.WriteLine(e2);/**/
         }
     }
 }
