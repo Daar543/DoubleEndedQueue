@@ -80,8 +80,8 @@ namespace DoubleEndedQueue
         private void ShrinkBack()
         {
             T[][] newArr = new T[blockCount - (int)(firstBlock / resizeFactor)][];
-            int minusSize = newArr.Length - data.Length;
-            for(int i = firstBlock; i < lastBlock; ++i)
+            int minusSize = data.Length - newArr.Length;
+            for(int i = firstBlock; i <= lastBlock; ++i)
             {
                 newArr[i - minusSize] = data[i];
             }
@@ -127,9 +127,12 @@ namespace DoubleEndedQueue
             }
         }
 
-        public int Count => (lastBlock - firstBlock - 1) * blockSize + blockSize - firstIndex + lastIndex + 1; //throw new NotImplementedException();
+        public int Count => 
+            (lastBlock - firstBlock - 1) * blockSize //full blocks
+            + blockSize - firstIndex //first block
+            + lastIndex + 1; //last block
 
-        public bool IsReadOnly => false; //throw new NotImplementedException();
+        public bool IsReadOnly => false;
 
         public void Add(T item)
         {
@@ -153,12 +156,24 @@ namespace DoubleEndedQueue
 
         public void Clear()
         {
-            for (int i = 0; i < Count; ++i)
+            int i = firstBlock;
+            for (int j = 0; j < blockSize; ++j)
             {
-                this[i] = default;
+                this.data[i][j] = default;
+            }
+            for (i = firstBlock+1; i < lastBlock; ++i)
+            {
+                for(int j = 0; j < blockSize; ++j)
+                {
+                    this.data[i][j] = default;
+                }
+            }
+            i = lastBlock;
+            for (int j = 0; j < blockSize; ++j)
+            {
+                this.data[i][j] = default;
             }
             return;
-            throw new NotImplementedException();
         }
 
         public bool Contains(T item)
@@ -235,7 +250,7 @@ namespace DoubleEndedQueue
             {
                 T item = data[firstBlock][firstIndex];
                 firstBlock += 1;
-                firstIndex = 00;
+                firstIndex = 0;
                 if (firstBlock > (lastBlock / resizeFactor / resizeFactor))
                 {
                     ShrinkBack();
@@ -293,8 +308,6 @@ namespace DoubleEndedQueue
                 return false;
             this.RemoveAt(idx);
             return true;
-
-            throw new NotImplementedException();
         }
 
         public void RemoveAt(int index)
@@ -368,10 +381,14 @@ namespace DoubleEndedQueue
             {
                 DQ.PopFront();
             }
-            for (int i = 0; i < maxlen / 2; ++i)
+            for (int i = 0; i < maxlen / 1.4; ++i)
             {
                 int randint = r.Next(0, 10000);
                 DQ.Prepend(randint);
+            }
+            for (int i = 0; i < maxlen / 2.2; ++i)
+            {
+                DQ.PopBack();
             }
             int[] bmarray = new int[] { 7, 15, 42 };
             bmarray = bmlist.ToArray();
@@ -388,6 +405,16 @@ namespace DoubleEndedQueue
             long accum = 0;
             Stopwatch sw = new Stopwatch();
 
+            sw = new Stopwatch();
+            sw.Start();
+            for (int rep = 0; rep < repetitions; ++rep)
+            {
+                DQ.Clear();
+            }
+            sw.Stop();
+            Console.WriteLine(sw.Elapsed);
+
+            sw = new Stopwatch();
             sw.Start();
             for(int rep = 0; rep < repetitions; ++rep)
             {
