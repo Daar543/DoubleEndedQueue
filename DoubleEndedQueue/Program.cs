@@ -55,7 +55,16 @@ namespace DoubleEndedQueue
         }
         private void ExpandBack()
         {
-
+            T[][] newArr = new T[(int)((lastBlock+1) * resizeFactor) + blockCount-lastBlock][]; //Only the part on "left" gets resized
+            int plusSize = newArr.Length - data.Length;
+            for (int i = lastBlock; i >= firstBlock; --i)
+            {
+                newArr[i+plusSize] = data[i];
+            }
+            firstBlock += plusSize;
+            lastBlock += plusSize;
+            this.data = newArr;
+            return;
             throw new NotImplementedException();
         }
         private void ShrinkFront()
@@ -70,7 +79,16 @@ namespace DoubleEndedQueue
         }
         private void ShrinkBack()
         {
-            throw new NotImplementedException();
+            T[][] newArr = new T[blockCount - (int)(firstBlock / resizeFactor)][];
+            int minusSize = newArr.Length - data.Length;
+            for(int i = firstBlock; i < lastBlock; ++i)
+            {
+                newArr[i - minusSize] = data[i];
+            }
+            firstBlock -= minusSize;
+            lastBlock -= minusSize;
+            this.data = newArr;
+            return;
         }
         public T this[int index]
         {
@@ -349,6 +367,11 @@ namespace DoubleEndedQueue
             for(int i = maxlen; i >= maxlen/4.3; --i)
             {
                 DQ.PopFront();
+            }
+            for (int i = 0; i < maxlen / 2; ++i)
+            {
+                int randint = r.Next(0, 10000);
+                DQ.Prepend(randint);
             }
             int[] bmarray = new int[] { 7, 15, 42 };
             bmarray = bmlist.ToArray();
