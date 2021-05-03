@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DoubleEndedQueue
 {
@@ -13,25 +14,30 @@ namespace DoubleEndedQueue
     }
     public class Deque<T> : IDeque<T>, IList<T>
     {
-        private readonly int dataBlockSize = 32;
-        private int firstIndex;
-        private int lastIndex;
-        private int firstBlock;
-        private int lastBlock;
+        private readonly int blockSize = 32;
+        private int firstIndex = 0;
+        private int lastIndex = -1;
+        private int firstBlock = 0;
+        private int lastBlock = 0;
 
         private T[][] data;
 
+        public Deque()
+        {
+            data = new T[1][];
+            data[0] = new T[blockSize];
+        }
         private int getBlock(int index)
         {
             if (index < 0)
             {
                 throw new IndexOutOfRangeException();
             }
-            int remaining = dataBlockSize - firstIndex;
-            int addBlocks = index / dataBlockSize;
-            int pushNext = index % dataBlockSize;
-            int next = (pushNext + firstIndex) / dataBlockSize;
-            int finalIndex = (pushNext + firstIndex) % dataBlockSize;
+            int remaining = blockSize - firstIndex;
+            int addBlocks = index / blockSize;
+            int pushNext = index % blockSize;
+            int next = (pushNext + firstIndex) / blockSize;
+            int finalIndex = (pushNext + firstIndex) % blockSize;
 
             return firstBlock + addBlocks + next;
         }
@@ -44,13 +50,15 @@ namespace DoubleEndedQueue
                 {
                     throw new IndexOutOfRangeException();
                 }
-                int addBlocks = index / dataBlockSize;
-                int pushNext = index % dataBlockSize;
-                int next = (pushNext + firstIndex) / dataBlockSize;
-                int finalIndex = (pushNext + firstIndex) % dataBlockSize;
+                /*
+                int addBlocks = index / blockSize;
+                int pushNext = index % blockSize;
+                int next = (pushNext + firstIndex) / blockSize;
+                int finalIndex = (pushNext + firstIndex) % blockSize;
                 int finalBlock = firstBlock + addBlocks + next;
+                */
 
-                return data[finalBlock][finalIndex];
+                return data[firstBlock + index / blockSize + (index % blockSize + firstIndex) / blockSize][(index % blockSize + firstIndex) % blockSize];
             }
             set
             {
@@ -58,31 +66,35 @@ namespace DoubleEndedQueue
                 {
                     throw new IndexOutOfRangeException();
                 }
-                int addBlocks = index / dataBlockSize;
-                int pushNext = index % dataBlockSize;
-                int next = (pushNext + firstIndex) / dataBlockSize;
-                int finalIndex = (pushNext + firstIndex) % dataBlockSize;
+                /*
+                int addBlocks = index / blockSize;
+                int pushNext = index % blockSize;
+                int next = (pushNext + firstIndex) / blockSize;
+                int finalIndex = (pushNext + firstIndex) % blockSize;
                 int finalBlock = firstBlock + addBlocks + next;
+                data[finalBlock][finalIndex]=value;
+                */
 
-                data[finalBlock][finalIndex] = value;
+                data[firstBlock + index / blockSize + (index % blockSize + firstIndex) / blockSize][(index % blockSize + firstIndex) % blockSize] = value;
             }
         }
 
-        public int Count => (lastBlock - firstBlock - 1) * dataBlockSize + dataBlockSize - firstIndex + lastIndex + 1; //throw new NotImplementedException();
+        public int Count => (lastBlock - firstBlock - 1) * blockSize + blockSize - firstIndex + lastIndex + 1; //throw new NotImplementedException();
 
         public bool IsReadOnly => false; //throw new NotImplementedException();
 
         public void Add(T item)
         {
-            if (lastIndex < dataBlockSize - 1) //Add to last block
+            if (lastIndex < blockSize - 1) //Add to last block
             {
                 data[lastBlock][++lastIndex] = item;
             }
             else //Create a new block
             {
-
+                throw new NotImplementedException();
             }
-            throw new NotImplementedException();
+            return;
+            
         }
 
         public void Clear()
@@ -136,7 +148,6 @@ namespace DoubleEndedQueue
 
         public int IndexOf(T item)
         {
-            //Not as effective, try rewriting
             for(int i = 0; i < this.Count; ++i)
             {
                 if (item.Equals(this[i]))
@@ -163,7 +174,7 @@ namespace DoubleEndedQueue
             {
                 throw new InvalidOperationException();
             }
-            if (firstIndex < dataBlockSize - 1) //Still some items in this block remaining
+            if (firstIndex < blockSize - 1) //Still some items in this block remaining
             {
                 return data[firstBlock][firstIndex++];
             }
@@ -198,9 +209,9 @@ namespace DoubleEndedQueue
             }
             else //Create a new block
             {
-
+                throw new NotImplementedException();
             }
-            throw new NotImplementedException();
+            return;
         }
 
         public bool Remove(T item)
@@ -220,42 +231,23 @@ namespace DoubleEndedQueue
             {
                 throw new IndexOutOfRangeException();
             }
-            else if(index > Count / 2) //Collapse items from back
+            else if(index > Count / 2) //Collapse items from front
             {
                 for(int i = Count-1; i > index; --i)
                 {
                     this[i] = this[i + 1];
                 }
-                this[Count - 1] = default;
-                if(this.lastIndex == 0)
-                {
-                    this.lastIndex = dataBlockSize;
-                    --lastBlock;
-                }
-                else
-                {
-                    this.lastIndex--;
-                }
+                this.PopFront();
             }
-            else //Collapse items from front
+            else //Collapse items from back
             {
                 for (int i = 0; i < index; ++i)
                 {
                     this[i+1] = this[i];
                 }
-                this[0] = default;
-                if (this.firstIndex == dataBlockSize)
-                {
-                    this.firstIndex = 0;
-                    ++this.firstBlock;
-                }
-                else
-                {
-                    this.firstIndex++;
-                }
+                this.PopBack();
             }
             return;
-            throw new NotImplementedException();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -274,7 +266,66 @@ namespace DoubleEndedQueue
     {
         public static void Main(string[] args)
         {
+            Deque<int> DQ = new Deque<int>();
 
+            DQ.Add(7);
+            DQ.Add(15);
+            DQ.Add(42);
+
+            DQ.RemoveAt(1);
+            DQ.Remove(15);
+            DQ.Remove(42);
+
+            DQ.Prepend(22);
+
+
+
+            /*Random r = new Random();
+            r.Next(1, 100);
+
+            List<int> bmlist = new List<int>();
+
+            int maxlen = 10000;
+            for(int i = 0; i < maxlen; ++i)
+            {
+                int randint = r.Next(0, 1000);
+                bmlist.Add(randint);
+                DQ.Add(randint);
+            }
+
+            int[] bmarray = new int[] { 7, 15, 42 };
+            bmarray = bmlist.ToArray();
+            int repetitions = 100000;
+            long accum = 0;
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+            for(int rep = 0; rep < repetitions; ++rep)
+            {
+                for(int i = 0; i < bmarray.Length; ++i)
+                {
+                    accum += bmarray[i];
+                }
+                accum = 0;
+            }
+            sw.Stop();
+            var e1 = sw.Elapsed;
+
+            sw = new Stopwatch();
+            sw.Start();
+            for (int rep = 0; rep < repetitions; ++rep)
+            {
+                for (int i = 0; i < DQ.Count; ++i)
+                {
+                    accum += DQ[i];
+                }
+                accum = 0;
+            }
+            sw.Stop();
+            var e2 = sw.Elapsed;
+
+            Console.WriteLine(e1);
+            Console.WriteLine(e2);*/
         }
     }
 }
