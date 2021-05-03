@@ -19,6 +19,8 @@ namespace DoubleEndedQueue
         private int lastIndex = -1;
         private int firstBlock = 0;
         private int lastBlock = 0;
+        private int blockCount = 1;
+        private float resizeFactor = 2;
 
         private T[][] data;
 
@@ -41,7 +43,14 @@ namespace DoubleEndedQueue
 
             return firstBlock + addBlocks + next;
         }
-
+        private void Expand()
+        {
+            throw new NotImplementedException();
+        }
+        private void Shrink()
+        {
+            throw new NotImplementedException();
+        }
         public T this[int index]
         {
             get
@@ -91,7 +100,13 @@ namespace DoubleEndedQueue
             }
             else //Create a new block
             {
-                throw new NotImplementedException();
+                lastBlock += 1;
+                if (lastBlock == blockCount)
+                {
+                    Expand();
+                }
+                data[lastBlock][0] = item;
+                lastIndex = 0;
             }
             return;
             
@@ -192,12 +207,18 @@ namespace DoubleEndedQueue
             }
             if (lastIndex > 0) //Still some items in this block remaining
             {
-
                 return data[lastBlock][lastIndex--];
             }
             else
             {
-                throw new NotImplementedException();
+                T item = data[lastBlock][lastIndex];
+                lastBlock -= 1;
+                lastIndex = blockSize;
+                if (lastBlock < (blockCount / resizeFactor / resizeFactor))
+                {
+                    Shrink();
+                }
+                return item;
             }
         }
 
