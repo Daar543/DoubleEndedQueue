@@ -2,11 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-
-namespace DoubleEndedQueue
-{
-    
-    
     
     interface IDeque<T>
     {
@@ -479,6 +474,8 @@ namespace DoubleEndedQueue
 
             public bool MoveNext()
             {
+                if (firstBl > lastBl || (firstBl == lastBl && firstInd > lastInd))
+                    return false;
                 if (i == -1)
                 {
                     i = firstBl;
@@ -513,3 +510,4 @@ namespace DoubleEndedQueue
             throw new NotImplementedException();
 	    }
     }
+    

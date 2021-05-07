@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+
 namespace DoubleEndedQueue
 {
     
@@ -479,6 +480,8 @@ namespace DoubleEndedQueue
 
             public bool MoveNext()
             {
+                if (firstBl > lastBl || (firstBl == lastBl && firstInd > lastInd))
+                    return false;
                 if (i == -1)
                 {
                     i = firstBl;
@@ -515,11 +518,27 @@ namespace DoubleEndedQueue
     }
     class Program
     {
+        public static void Test<T>(Deque<T> dq)
+        {
+            int idx = 0;
+            foreach (var x in dq)
+            {
+
+                T x2 = dq[idx];
+                if (x.Equals( x2))
+                    Console.WriteLine(x);
+                else
+                {
+                    Console.WriteLine($"Difference at index {idx}: {x} vs {x2}");
+                }
+                idx += 1;
+            }
+        }
         public static void Main(string[] args)
         {
             Deque<int> DQ = new Deque<int>();
 
-            DQ.Add(7);
+            /*DQ.Add(7);
             DQ.Add(15);
             DQ.Add(42);
             DQ.Insert(1, 44);
@@ -534,9 +553,14 @@ namespace DoubleEndedQueue
             foreach(var x in DQ)
             {
                 Console.WriteLine(x);
+            }*/
+            foreach (var x in DQ)
+            {
+                Console.WriteLine(x);
             }
+            
 
-            Random r = new Random();
+           Random r = new Random();
             r.Next(1, 100);
 
             List<int> bmlist = new List<int>();
@@ -548,6 +572,7 @@ namespace DoubleEndedQueue
                 bmlist.Add(randint);
                 DQ.Add(randint);
             }
+            Test(DQ);
             for(int i = maxlen; i >= maxlen/4.3; --i)
             {
                 DQ.PopFront();
@@ -561,19 +586,7 @@ namespace DoubleEndedQueue
             {
                 DQ.PopBack();
             }
-            int idx = 0;
-            foreach (var x in DQ)
-            {
-                
-                int x2 = DQ[idx];
-                if (x == x2)
-                    Console.WriteLine(x);
-                else
-                {
-                    Console.WriteLine($"Difference at index {idx}: {x} vs {x2}");
-                }
-                idx += 1;
-            }
+            
             /*int[] bmarray = new int[] { 7, 15, 42 };
             bmarray = bmlist.ToArray();
 
@@ -629,3 +642,4 @@ namespace DoubleEndedQueue
         }
     }
 }
+#endif
