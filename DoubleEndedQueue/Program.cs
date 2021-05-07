@@ -437,78 +437,7 @@ namespace DoubleEndedQueue
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return new DequeEnumerator(this);
-            //throw new NotImplementedException();
-        }
-        private class DequeEnumerator : IEnumerator<T>
-        {
-            public DequeEnumerator(Deque<T> dq)
-            {
-                
-                this.dq = dq;
-                dq.beingEnumerated = true;
-                firstInd = dq.firstIndex;
-                lastInd = dq.lastIndex;
-                firstBl = dq.firstBlock;
-                lastBl = dq.lastBlock;
-                blocksize = dq.blockSize;
-                this.i = -1;
-            }
-            private int i;
-            private int j;
-            private int blocksize;
-            private int firstInd;
-            private int lastInd;
-            private int firstBl;
-            private int lastBl;
-            private Deque<T> dq;
-            public T Current => getCurrent();
-            private T getCurrent()
-            {
-                if(i == -1)
-                {
-                    throw new InvalidOperationException("Iteration has not started - use MoveNext()");
-                }
-                return dq.data[i][j];
-            }
-            object IEnumerator.Current => (object)this.Current; 
-
-            public void Dispose()
-            {
-                dq.beingEnumerated = false;
-                GC.SuppressFinalize(this);
-                //throw new NotImplementedException();
-            }
-
-            public bool MoveNext()
-            {
-                if (firstBl > lastBl || (firstBl == lastBl && firstInd > lastInd))
-                    return false;
-                if (i == -1)
-                {
-                    i = firstBl;
-                    j = firstInd;
-                }
-                else if (i == lastBl && j == lastInd)
-                {
-                    return false;
-                }
-                else if (j == blocksize-1)
-                {
-                    i += 1;
-                    j = 0;
-                }
-                else
-                {
-                    j += 1;
-                }
-                return true;
-            }
-
-            public void Reset()
-            {
-                throw new NotImplementedException();
-            }
+            throw new NotImplementedException();
         }
     }
     public static class DequeTest
