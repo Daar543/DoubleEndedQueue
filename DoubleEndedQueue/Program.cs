@@ -24,6 +24,7 @@ namespace DoubleEndedQueue
         protected int lastBlock = 0;
         private int blockCount { get => data.Length; }
         private float resizeFactor = 2;
+        protected bool beingEnumerated = false;
 
         private T[][] data;
         /*public void Iterate(Action<T> clearance)
@@ -247,7 +248,8 @@ namespace DoubleEndedQueue
 
         public IEnumerator<T> GetEnumerator()
         {
-            throw new NotImplementedException();
+            return new DequeEnumerator(this);
+            //throw new NotImplementedException();
         }
 
         public int IndexOf(T item)
@@ -418,18 +420,22 @@ namespace DoubleEndedQueue
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return new DequeEnumerator(this);
+            //throw new NotImplementedException();
         }
         private class DequeEnumerator : IEnumerator<T>
         {
             public DequeEnumerator(Deque<T> dq)
             {
+                
                 this.dq = dq;
+                dq.beingEnumerated = true;
                 firstInd = dq.firstIndex;
                 lastInd = dq.lastIndex;
                 firstBl = dq.firstBlock;
-                lastBl = dq.lastIndex;
+                lastBl = dq.lastBlock;
                 blocksize = dq.blockSize;
+                this.i = -1;
             }
             private int i;
             private int j;
@@ -448,10 +454,11 @@ namespace DoubleEndedQueue
                 }
                 return dq.data[i][j];
             }
-            object IEnumerator.Current => (object)this.Current; //throw new NotImplementedException();
+            object IEnumerator.Current => (object)this.Current; 
 
             public void Dispose()
             {
+                dq.beingEnumerated = false;
                 GC.SuppressFinalize(this);
                 //throw new NotImplementedException();
             }
@@ -462,7 +469,6 @@ namespace DoubleEndedQueue
                 {
                     i = firstBl;
                     j = firstInd;
-                    return false;
                 }
                 else if (i == lastBl && j == lastInd)
                 {
@@ -493,7 +499,7 @@ namespace DoubleEndedQueue
             throw new NotImplementedException();
 	    }
     }
-class Program
+    class Program
     {
         public static void Main(string[] args)
         {
@@ -511,7 +517,11 @@ class Program
 
             DQ.Prepend(22);
 
-
+            foreach(var x in DQ)
+            {
+                Console.WriteLine(x);
+                DQ.Add(x + 6);
+            }
 
             Random r = new Random();
             r.Next(1, 100);
