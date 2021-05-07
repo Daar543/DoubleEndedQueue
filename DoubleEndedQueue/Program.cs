@@ -272,13 +272,31 @@ namespace DoubleEndedQueue
 
         public int IndexOf(T item)
         {
-            for(int i = 0; i < this.Count; ++i)
+            int idx = 0;
+            int i = firstBlock;
+            for (int j = firstIndex; j < blockSize; ++j)
             {
-                if (item.Equals(this[i]))
-                    return i;
+                if (item.Equals(data[i][j]))
+                    return idx;
+                idx++;
+            }
+            for (i = firstBlock + 1; i < lastBlock; ++i)
+            {
+                for (int j = 0; j < blockSize; ++j)
+                {
+                    if (item.Equals(data[i][j]))
+                        return idx;
+                    idx++;
+                }
+            }
+            i = lastBlock;
+            for (int j = 0; j < lastIndex; ++j)
+            {
+                if (item.Equals(data[i][j]))
+                    return idx;
+                idx++;
             }
             return -1;
-            throw new NotImplementedException();
         }
 
         public void Insert(int index, T item)
