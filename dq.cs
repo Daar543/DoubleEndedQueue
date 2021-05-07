@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-    
+
     interface IDeque<T>
     {
         public void Prepend(T item);
@@ -21,6 +21,7 @@ using System.Diagnostics;
         private float resizeFactor = 2;
         protected bool beingEnumerated = false;
 
+        
         
 
         private T[][] data;
@@ -48,7 +49,7 @@ using System.Diagnostics;
         private void CheckForEnumeration()
         {
             if (this.beingEnumerated)
-                throw new Exception("Cannot modify enumerated collection!");
+                throw new InvalidOperationException("Cannot modify enumerated collection!");
         }
         public Deque()
         {
@@ -291,34 +292,35 @@ using System.Diagnostics;
             this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
 
             var(startBlock,startInd) = RecountIndex(index);
+            //If moving only one block
             if(startBlock == lastBlock)
             {
-                for (int j = startInd; j < lastIndex - 1; ++j)
+                for (int j = lastIndex-1; j >= startInd; --j)
                 {
                     data[startBlock][j + 1] = data[startBlock][j];
                 }
                 data[startBlock][startInd] = item;
                 return;
             }
-                
-            for (int j = startInd; j < blockSize - 1; ++j)
-            {
-                data[startBlock][j + 1] = data[startBlock][j];
-            }
-            data[startBlock + 1][0] = data[startBlock][blockSize - 1];
-            for(int i = startBlock+1; i < lastBlock; ++i)
-            {
-                for (int j = 0; j < blockSize - 1; ++j)
-                {
-                    data[i][j + 1] = data[i][j];
-                }
-                data[i + 1][0] = data[i][blockSize - 1];
-            }
-            for(int j = 0; j < lastIndex - 1; ++j)
+            //If moving more
+            for(int j = lastIndex-2; j>0; --j)
             {
                 data[lastBlock][j + 1] = data[lastBlock][j];
             }
-            
+            data[lastBlock][0] = data[lastBlock - 1][blockSize-1];
+            for(int i = lastBlock-1; i > startBlock; --i)
+            {
+                for (int j = blockSize - 2; j >= 0; --j)
+                {
+                    data[i][j + 1] = data[i][j];
+                }
+                data[i][0] = data[i - 1][blockSize - 1];
+            }
+            for (int j = blockSize - 2; j >= startInd; --j)
+            {
+                data[startBlock][j + 1] = data[startBlock][j];
+            }
+            //Finally put the item on its position
             data[startBlock][startInd] = item;
             return;
         }
@@ -510,4 +512,5 @@ using System.Diagnostics;
             throw new NotImplementedException();
 	    }
     }
-    
+
+
