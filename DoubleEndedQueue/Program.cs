@@ -5,27 +5,7 @@ using System.Diagnostics;
 
 namespace DoubleEndedQueue
 {
-    class Enumerator<T> : IEnumerator<T>
-    {
-        public T Current => throw new NotImplementedException();
-
-        object IEnumerator.Current => throw new NotImplementedException();
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool MoveNext()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Reset()
-        {
-            throw new NotImplementedException();
-        }
-    }
+    
     
     
     interface IDeque<T>
@@ -38,10 +18,10 @@ namespace DoubleEndedQueue
     public class Deque<T> : IDeque<T>, IList<T>
     {
         private readonly int blockSize = 32;
-        private int firstIndex = 0;
-        private int lastIndex = -1;
-        private int firstBlock = 0;
-        private int lastBlock = 0;
+        protected int firstIndex = 0;
+        protected int lastIndex = -1;
+        protected int firstBlock = 0;
+        protected int lastBlock = 0;
         private int blockCount { get => data.Length; }
         private float resizeFactor = 2;
 
@@ -143,7 +123,7 @@ namespace DoubleEndedQueue
             int finalIndex = (pushNext + firstIndex) % blockSize;
             int finalBlock = firstBlock + addBlocks + next;
 
-            return Tuple.Create(finalIndex, finalBlock);
+            return Tuple.Create(finalBlock, finalIndex);
 
         }
         public T this[int index]
@@ -305,8 +285,17 @@ namespace DoubleEndedQueue
             this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
 
             var(startBlock,startInd) = RecountIndex(index);
-
-            for(int j = startInd; j < blockSize - 1; ++j)
+            if(startBlock == lastBlock)
+            {
+                for (int j = startInd; j < lastIndex - 1; ++j)
+                {
+                    data[startBlock][j + 1] = data[startBlock][j];
+                }
+                data[startBlock][startInd] = item;
+                return;
+            }
+                
+            for (int j = startInd; j < blockSize - 1; ++j)
             {
                 data[startBlock][j + 1] = data[startBlock][j];
             }
@@ -431,6 +420,71 @@ namespace DoubleEndedQueue
         {
             throw new NotImplementedException();
         }
+        private class DequeEnumerator : IEnumerator<T>
+        {
+            public DequeEnumerator(Deque<T> dq)
+            {
+                this.dq = dq;
+                firstInd = dq.firstIndex;
+                lastInd = dq.lastIndex;
+                firstBl = dq.firstBlock;
+                lastBl = dq.lastIndex;
+                blocksize = dq.blockSize;
+            }
+            private int i;
+            private int j;
+            private int blocksize;
+            private int firstInd;
+            private int lastInd;
+            private int firstBl;
+            private int lastBl;
+            private Deque<T> dq;
+            public T Current => getCurrent();
+            private T getCurrent()
+            {
+                if(i == -1)
+                {
+                    throw new InvalidOperationException("Iteration has not started - use MoveNext()");
+                }
+                return dq.data[i][j];
+            }
+            object IEnumerator.Current => (object)this.Current; //throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                GC.SuppressFinalize(this);
+                //throw new NotImplementedException();
+            }
+
+            public bool MoveNext()
+            {
+                if (i == -1)
+                {
+                    i = firstBl;
+                    j = firstInd;
+                    return false;
+                }
+                else if (i == lastBl && j == lastInd)
+                {
+                    return false;
+                }
+                else if (j == blocksize)
+                {
+                    i += 1;
+                    j = 0;
+                }
+                else
+                {
+                    j += 1;
+                }
+                return true;
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
     public static class DequeTest
     {
@@ -439,7 +493,7 @@ namespace DoubleEndedQueue
             throw new NotImplementedException();
 	    }
     }
-    /**/class Program
+class Program
     {
         public static void Main(string[] args)
         {
@@ -448,6 +502,8 @@ namespace DoubleEndedQueue
             DQ.Add(7);
             DQ.Add(15);
             DQ.Add(42);
+            DQ.Insert(1, 44);
+            Console.WriteLine(DQ.IndexOf(42));
 
             DQ.RemoveAt(1);
             DQ.Remove(15);
@@ -482,7 +538,7 @@ namespace DoubleEndedQueue
             {
                 DQ.PopBack();
             }
-            int[] bmarray = new int[] { 7, 15, 42 };
+            /*int[] bmarray = new int[] { 7, 15, 42 };
             bmarray = bmlist.ToArray();
 
             for (int i = 0; i < bmarray.Length; ++i)
@@ -533,7 +589,7 @@ namespace DoubleEndedQueue
             var e2 = sw.Elapsed;
 
             Console.WriteLine(e1);
-            Console.WriteLine(e2);
+            Console.WriteLine(e2);*/
         }
-    }/**/
+    }
 }
