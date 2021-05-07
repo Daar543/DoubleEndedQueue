@@ -3,7 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-	interface IDeque<T>
+namespace DoubleEndedQueue
+{
+    
+    
+    
+    interface IDeque<T>
     {
         public void Prepend(T item);
         public void Add(T item);
@@ -13,15 +18,43 @@ using System.Diagnostics;
     public class Deque<T> : IDeque<T>, IList<T>
     {
         private readonly int blockSize = 32;
-        private int firstIndex = 0;
-        private int lastIndex = -1;
-        private int firstBlock = 0;
-        private int lastBlock = 0;
+        protected int firstIndex = 0;
+        protected int lastIndex = -1;
+        protected int firstBlock = 0;
+        protected int lastBlock = 0;
         private int blockCount { get => data.Length; }
         private float resizeFactor = 2;
+        protected bool beingEnumerated = false;
+
+        
 
         private T[][] data;
-
+        /*public void Iterate(Action<T> clearance)
+        {
+            int i = firstBlock;
+            for (int j = firstIndex; j < blockSize; ++j)
+            {
+                clearance(data[i][j]);
+            }
+            for (i = firstBlock + 1; i < lastBlock; ++i)
+            {
+                for (int j = 0; j < blockSize; ++j)
+                {
+                    clearance(data[i][j]);
+                }
+            }
+            i = lastBlock;
+            for (int j = 0; j < lastIndex; ++j)
+            {
+                clearance(data[i][j]);
+            }
+            return;
+        }*/
+        private void CheckForEnumeration()
+        {
+            if (this.beingEnumerated)
+                throw new Exception("Cannot modify enumerated collection!");
+        }
         public Deque()
         {
             data = new T[1][];
@@ -88,6 +121,18 @@ using System.Diagnostics;
             this.data = newArr;
             return;
         }
+        private Tuple<int, int> RecountIndex(int index)
+        {
+
+            int addBlocks = index / blockSize;
+            int pushNext = index % blockSize;
+            int next = (pushNext + firstIndex) / blockSize;
+            int finalIndex = (pushNext + firstIndex) % blockSize;
+            int finalBlock = firstBlock + addBlocks + next;
+
+            return Tuple.Create(finalBlock, finalIndex);
+
+        }
         public T this[int index]
         {
             get
@@ -134,6 +179,7 @@ using System.Diagnostics;
 
         public void Add(T item)
         {
+            CheckForEnumeration();
             if (lastIndex < blockSize - 1) //Add to last block
             {
                 data[lastBlock][++lastIndex] = item;
@@ -154,8 +200,9 @@ using System.Diagnostics;
 
         public void Clear()
         {
+            CheckForEnumeration();
             int i = firstBlock;
-            for (int j = 0; j < blockSize; ++j)
+            for (int j = firstIndex; j < blockSize; ++j)
             {
                 this.data[i][j] = default;
             }
@@ -167,7 +214,7 @@ using System.Diagnostics;
                 }
             }
             i = lastBlock;
-            for (int j = 0; j < blockSize; ++j)
+            for (int j = 0; j < lastIndex; ++j)
             {
                 this.data[i][j] = default;
             }
@@ -209,33 +256,81 @@ using System.Diagnostics;
 
         public IEnumerator<T> GetEnumerator()
         {
-            throw new NotImplementedException();
+            return new DequeEnumerator(this);
+            //throw new NotImplementedException();
         }
 
         public int IndexOf(T item)
         {
-            for(int i = 0; i < this.Count; ++i)
+            int idx = 0;
+            int i = firstBlock;
+            for (int j = firstIndex; j < blockSize; ++j)
             {
-                if (item.Equals(this[i]))
-                    return i;
+                if (item.Equals(data[i][j]))
+                    return idx;
+                idx++;
+            }
+            for (i = firstBlock + 1; i < lastBlock; ++i)
+            {
+                for (int j = 0; j < blockSize; ++j)
+                {
+                    if (item.Equals(data[i][j]))
+                        return idx;
+                    idx++;
+                }
+            }
+            i = lastBlock;
+            for (int j = 0; j < lastIndex; ++j)
+            {
+                if (item.Equals(data[i][j]))
+                    return idx;
+                idx++;
             }
             return -1;
-            throw new NotImplementedException();
         }
 
         public void Insert(int index, T item)
         {
-            this.Add(this[this.Count - 1]);
-            for(int i = this.Count-2; i > index; --i)
+            CheckForEnumeration();
+            //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
+            this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
+
+            var(startBlock,startInd) = RecountIndex(index);
+            if(startBlock == lastBlock)
             {
-                this[i] = this[i - 1];
+                for (int j = startInd; j < lastIndex - 1; ++j)
+                {
+                    data[startBlock][j + 1] = data[startBlock][j];
+                }
+                data[startBlock][startInd] = item;
+                return;
             }
-            this[index] = item;
+                
+            for (int j = startInd; j < blockSize - 1; ++j)
+            {
+                data[startBlock][j + 1] = data[startBlock][j];
+            }
+            data[startBlock + 1][0] = data[startBlock][blockSize - 1];
+            for(int i = startBlock+1; i < lastBlock; ++i)
+            {
+                for (int j = 0; j < blockSize - 1; ++j)
+                {
+                    data[i][j + 1] = data[i][j];
+                }
+                data[i + 1][0] = data[i][blockSize - 1];
+            }
+            for(int j = 0; j < lastIndex - 1; ++j)
+            {
+                data[lastBlock][j + 1] = data[lastBlock][j];
+            }
+            
+            data[startBlock][startInd] = item;
             return;
         }
 
         public T PopBack()
         {
+            CheckForEnumeration();
             if (Count <= 0)
             {
                 throw new InvalidOperationException();
@@ -259,6 +354,7 @@ using System.Diagnostics;
 
         public T PopFront()
         {
+            CheckForEnumeration();
             if (Count <= 0)
             {
                 throw new InvalidOperationException();
@@ -282,6 +378,7 @@ using System.Diagnostics;
 
         public void Prepend(T item)
         {
+            CheckForEnumeration();
             if (firstIndex > 0) //Add to first block
             {
                 data[firstBlock][--firstIndex] = item;
@@ -301,6 +398,7 @@ using System.Diagnostics;
 
         public bool Remove(T item)
         {
+            CheckForEnumeration();
             int idx = this.IndexOf(item);
             if (idx == -1)
                 return false;
@@ -310,6 +408,7 @@ using System.Diagnostics;
 
         public void RemoveAt(int index)
         {
+            CheckForEnumeration();
             if (index < 0)
             {
                 throw new IndexOutOfRangeException();
@@ -335,7 +434,76 @@ using System.Diagnostics;
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return new DequeEnumerator(this);
+            //throw new NotImplementedException();
+        }
+        private class DequeEnumerator : IEnumerator<T>
+        {
+            public DequeEnumerator(Deque<T> dq)
+            {
+                
+                this.dq = dq;
+                dq.beingEnumerated = true;
+                firstInd = dq.firstIndex;
+                lastInd = dq.lastIndex;
+                firstBl = dq.firstBlock;
+                lastBl = dq.lastBlock;
+                blocksize = dq.blockSize;
+                this.i = -1;
+            }
+            private int i;
+            private int j;
+            private int blocksize;
+            private int firstInd;
+            private int lastInd;
+            private int firstBl;
+            private int lastBl;
+            private Deque<T> dq;
+            public T Current => getCurrent();
+            private T getCurrent()
+            {
+                if(i == -1)
+                {
+                    throw new InvalidOperationException("Iteration has not started - use MoveNext()");
+                }
+                return dq.data[i][j];
+            }
+            object IEnumerator.Current => (object)this.Current; 
+
+            public void Dispose()
+            {
+                dq.beingEnumerated = false;
+                GC.SuppressFinalize(this);
+                //throw new NotImplementedException();
+            }
+
+            public bool MoveNext()
+            {
+                if (i == -1)
+                {
+                    i = firstBl;
+                    j = firstInd;
+                }
+                else if (i == lastBl && j == lastInd)
+                {
+                    return false;
+                }
+                else if (j == blocksize-1)
+                {
+                    i += 1;
+                    j = 0;
+                }
+                else
+                {
+                    j += 1;
+                }
+                return true;
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
         }
     }
     public static class DequeTest

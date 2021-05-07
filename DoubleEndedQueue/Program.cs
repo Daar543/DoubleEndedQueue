@@ -26,6 +26,8 @@ namespace DoubleEndedQueue
         private float resizeFactor = 2;
         protected bool beingEnumerated = false;
 
+        
+
         private T[][] data;
         /*public void Iterate(Action<T> clearance)
         {
@@ -48,7 +50,11 @@ namespace DoubleEndedQueue
             }
             return;
         }*/
-
+        private void CheckForEnumeration()
+        {
+            if (this.beingEnumerated)
+                throw new Exception("Cannot modify enumerated collection!");
+        }
         public Deque()
         {
             data = new T[1][];
@@ -173,6 +179,7 @@ namespace DoubleEndedQueue
 
         public void Add(T item)
         {
+            CheckForEnumeration();
             if (lastIndex < blockSize - 1) //Add to last block
             {
                 data[lastBlock][++lastIndex] = item;
@@ -193,6 +200,7 @@ namespace DoubleEndedQueue
 
         public void Clear()
         {
+            CheckForEnumeration();
             int i = firstBlock;
             for (int j = firstIndex; j < blockSize; ++j)
             {
@@ -283,6 +291,7 @@ namespace DoubleEndedQueue
 
         public void Insert(int index, T item)
         {
+            CheckForEnumeration();
             //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
             this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
 
@@ -321,6 +330,7 @@ namespace DoubleEndedQueue
 
         public T PopBack()
         {
+            CheckForEnumeration();
             if (Count <= 0)
             {
                 throw new InvalidOperationException();
@@ -344,6 +354,7 @@ namespace DoubleEndedQueue
 
         public T PopFront()
         {
+            CheckForEnumeration();
             if (Count <= 0)
             {
                 throw new InvalidOperationException();
@@ -367,6 +378,7 @@ namespace DoubleEndedQueue
 
         public void Prepend(T item)
         {
+            CheckForEnumeration();
             if (firstIndex > 0) //Add to first block
             {
                 data[firstBlock][--firstIndex] = item;
@@ -386,6 +398,7 @@ namespace DoubleEndedQueue
 
         public bool Remove(T item)
         {
+            CheckForEnumeration();
             int idx = this.IndexOf(item);
             if (idx == -1)
                 return false;
@@ -395,6 +408,7 @@ namespace DoubleEndedQueue
 
         public void RemoveAt(int index)
         {
+            CheckForEnumeration();
             if (index < 0)
             {
                 throw new IndexOutOfRangeException();
@@ -474,7 +488,7 @@ namespace DoubleEndedQueue
                 {
                     return false;
                 }
-                else if (j == blocksize)
+                else if (j == blocksize-1)
                 {
                     i += 1;
                     j = 0;
@@ -516,11 +530,10 @@ namespace DoubleEndedQueue
             DQ.Remove(42);
 
             DQ.Prepend(22);
-
+            
             foreach(var x in DQ)
             {
                 Console.WriteLine(x);
-                DQ.Add(x + 6);
             }
 
             Random r = new Random();
@@ -547,6 +560,19 @@ namespace DoubleEndedQueue
             for (int i = 0; i < maxlen / 2.2; ++i)
             {
                 DQ.PopBack();
+            }
+            int idx = 0;
+            foreach (var x in DQ)
+            {
+                
+                int x2 = DQ[idx];
+                if (x == x2)
+                    Console.WriteLine(x);
+                else
+                {
+                    Console.WriteLine($"Difference at index {idx}: {x} vs {x2}");
+                }
+                idx += 1;
             }
             /*int[] bmarray = new int[] { 7, 15, 42 };
             bmarray = bmlist.ToArray();
