@@ -301,29 +301,40 @@ namespace DoubleEndedQueue
 
         public void Insert(int index, T item)
         {
+            CheckForEnumeration();
             //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
             this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
 
-            var(startBlock,startInd) = RecountIndex(index);
-
-            for(int j = startInd; j < blockSize - 1; ++j)
+            var (startBlock, startInd) = RecountIndex(index);
+            //If moving only one block
+            if (startBlock == lastBlock)
             {
-                data[startBlock][j + 1] = data[startBlock][j];
-            }
-            data[startBlock + 1][0] = data[startBlock][blockSize - 1];
-            for(int i = startBlock+1; i < lastBlock; ++i)
-            {
-                for (int j = 0; j < blockSize - 1; ++j)
+                for (int j = lastIndex - 1; j >= startInd; --j)
                 {
-                    data[i][j + 1] = data[i][j];
+                    data[startBlock][j + 1] = data[startBlock][j];
                 }
-                data[i + 1][0] = data[i][blockSize - 1];
+                data[startBlock][startInd] = item;
+                return;
             }
-            for(int j = 0; j < lastIndex - 1; ++j)
+            //If moving more
+            for (int j = lastIndex - 2; j >= 0; --j)
             {
                 data[lastBlock][j + 1] = data[lastBlock][j];
             }
-            
+            data[lastBlock][0] = data[lastBlock - 1][blockSize - 1];
+            for (int i = lastBlock - 1; i > startBlock; --i)
+            {
+                for (int j = blockSize - 2; j >= 0; --j)
+                {
+                    data[i][j + 1] = data[i][j];
+                }
+                data[i][0] = data[i - 1][blockSize - 1];
+            }
+            for (int j = blockSize - 2; j >= startInd; --j)
+            {
+                data[startBlock][j + 1] = data[startBlock][j];
+            }
+            //Finally put the item on its position
             data[startBlock][startInd] = item;
             return;
         }
