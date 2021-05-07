@@ -62,19 +62,10 @@ namespace DoubleEndedQueue
             data = new T[1][];
             data[0] = new T[blockSize];
         }
-        private int getBlock(int index)
+        private void checkForEnumeration()
         {
-            if (index < 0)
-            {
-                throw new IndexOutOfRangeException();
-            }
-            int remaining = blockSize - firstIndex;
-            int addBlocks = index / blockSize;
-            int pushNext = index % blockSize;
-            int next = (pushNext + firstIndex) / blockSize;
-            int finalIndex = (pushNext + firstIndex) % blockSize;
-
-            return firstBlock + addBlocks + next;
+            if (this.beingEnumerated)
+                throw new InvalidOperationException("Not allowed to modify collectrion during enumeration!");
         }
         private void ExpandFront()
         {
@@ -282,7 +273,7 @@ namespace DoubleEndedQueue
                 }
             }
             i = lastBlock;
-            for (int j = 0; j < lastIndex; ++j)
+            for (int j = 0; j <= lastIndex; ++j)
             {
                 if (item.Equals(data[i][j]))
                     return idx;
