@@ -52,7 +52,7 @@ namespace DoubleEndedQueue
             }
             return;
         }*/
-        private void CheckForEnumeration()
+        private void checkForEnumeration()
         {
             if (this.beingEnumerated)
                 throw new InvalidOperationException("Cannot modify enumerated collection!");
@@ -181,7 +181,7 @@ namespace DoubleEndedQueue
 
         public void Add(T item)
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             if (lastIndex < blockSize - 1) //Add to last block
             {
                 data[lastBlock][++lastIndex] = item;
@@ -202,7 +202,7 @@ namespace DoubleEndedQueue
 
         public void Clear()
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             int i = firstBlock;
             for (int j = firstIndex; j < blockSize; ++j)
             {
@@ -293,7 +293,7 @@ namespace DoubleEndedQueue
 
         public void Insert(int index, T item)
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
             this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
 
@@ -333,7 +333,7 @@ namespace DoubleEndedQueue
 
         public T PopBack()
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             if (Count <= 0)
             {
                 throw new InvalidOperationException();
@@ -357,7 +357,7 @@ namespace DoubleEndedQueue
 
         public T PopFront()
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             if (Count <= 0)
             {
                 throw new InvalidOperationException();
@@ -381,7 +381,7 @@ namespace DoubleEndedQueue
 
         public void Prepend(T item)
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             if (firstIndex > 0) //Add to first block
             {
                 data[firstBlock][--firstIndex] = item;
@@ -401,7 +401,7 @@ namespace DoubleEndedQueue
 
         public bool Remove(T item)
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             int idx = this.IndexOf(item);
             if (idx == -1)
                 return false;
@@ -411,7 +411,7 @@ namespace DoubleEndedQueue
 
         public void RemoveAt(int index)
         {
-            CheckForEnumeration();
+            checkForEnumeration();
             if (index < 0)
             {
                 throw new IndexOutOfRangeException();
