@@ -1,34 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-
-namespace DoubleEndedQueue
-{
-    class Enumerator<T> : IEnumerator<T>
-    {
-        public T Current => throw new NotImplementedException();
-
-        object IEnumerator.Current => throw new NotImplementedException();
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool MoveNext()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Reset()
-        {
-            throw new NotImplementedException();
-        }
-    }
-    
-    
-    interface IDeque<T>
+interface IDeque<T>
     {
         public void Prepend(T item);
         public void Add(T item);
@@ -46,27 +16,6 @@ namespace DoubleEndedQueue
         private float resizeFactor = 2;
 
         private T[][] data;
-        /*public void Iterate(Action<T> clearance)
-        {
-            int i = firstBlock;
-            for (int j = firstIndex; j < blockSize; ++j)
-            {
-                clearance(data[i][j]);
-            }
-            for (i = firstBlock + 1; i < lastBlock; ++i)
-            {
-                for (int j = 0; j < blockSize; ++j)
-                {
-                    clearance(data[i][j]);
-                }
-            }
-            i = lastBlock;
-            for (int j = 0; j < lastIndex; ++j)
-            {
-                clearance(data[i][j]);
-            }
-            return;
-        }*/
 
         public Deque()
         {
@@ -133,18 +82,6 @@ namespace DoubleEndedQueue
             lastBlock -= minusSize;
             this.data = newArr;
             return;
-        }
-        private Tuple<int, int> RecountIndex(int index)
-        {
-
-            int addBlocks = index / blockSize;
-            int pushNext = index % blockSize;
-            int next = (pushNext + firstIndex) / blockSize;
-            int finalIndex = (pushNext + firstIndex) % blockSize;
-            int finalBlock = firstBlock + addBlocks + next;
-
-            return Tuple.Create(finalIndex, finalBlock);
-
         }
         public T this[int index]
         {
@@ -213,7 +150,7 @@ namespace DoubleEndedQueue
         public void Clear()
         {
             int i = firstBlock;
-            for (int j = firstIndex; j < blockSize; ++j)
+            for (int j = 0; j < blockSize; ++j)
             {
                 this.data[i][j] = default;
             }
@@ -225,7 +162,7 @@ namespace DoubleEndedQueue
                 }
             }
             i = lastBlock;
-            for (int j = 0; j < lastIndex; ++j)
+            for (int j = 0; j < blockSize; ++j)
             {
                 this.data[i][j] = default;
             }
@@ -283,30 +220,12 @@ namespace DoubleEndedQueue
 
         public void Insert(int index, T item)
         {
-            //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
-            this.Add(data[lastBlock][lastIndex]); //Increase the size by 1 and push the last item in there
-
-            var(startBlock,startInd) = RecountIndex(index);
-
-            for(int j = startInd; j < blockSize - 1; ++j)
+            this.Add(this[this.Count - 1]);
+            for(int i = this.Count-2; i > index; --i)
             {
-                data[startBlock][j + 1] = data[startBlock][j];
+                this[i] = this[i - 1];
             }
-            data[startBlock + 1][0] = data[startBlock][blockSize - 1];
-            for(int i = startBlock+1; i < lastBlock; ++i)
-            {
-                for (int j = 0; j < blockSize - 1; ++j)
-                {
-                    data[i][j + 1] = data[i][j];
-                }
-                data[i + 1][0] = data[i][blockSize - 1];
-            }
-            for(int j = 0; j < lastIndex - 1; ++j)
-            {
-                data[lastBlock][j + 1] = data[lastBlock][j];
-            }
-            
-            data[startBlock][startInd] = item;
+            this[index] = item;
             return;
         }
 
@@ -421,101 +340,3 @@ namespace DoubleEndedQueue
             throw new NotImplementedException();
 	    }
     }
-    /**/class Program
-    {
-        public static void Main(string[] args)
-        {
-            Deque<int> DQ = new Deque<int>();
-
-            DQ.Add(7);
-            DQ.Add(15);
-            DQ.Add(42);
-
-            DQ.RemoveAt(1);
-            DQ.Remove(15);
-            DQ.Remove(42);
-
-            DQ.Prepend(22);
-
-
-
-            Random r = new Random();
-            r.Next(1, 100);
-
-            List<int> bmlist = new List<int>();
-
-            int maxlen = 10000;
-            for(int i = 0; i < maxlen; ++i)
-            {
-                int randint = r.Next(0, 10000);
-                bmlist.Add(randint);
-                DQ.Add(randint);
-            }
-            for(int i = maxlen; i >= maxlen/4.3; --i)
-            {
-                DQ.PopFront();
-            }
-            for (int i = 0; i < maxlen / 1.4; ++i)
-            {
-                int randint = r.Next(0, 10000);
-                DQ.Prepend(randint);
-            }
-            for (int i = 0; i < maxlen / 2.2; ++i)
-            {
-                DQ.PopBack();
-            }
-            int[] bmarray = new int[] { 7, 15, 42 };
-            bmarray = bmlist.ToArray();
-
-            for (int i = 0; i < bmarray.Length; ++i)
-            {
-                if (bmarray[i] != DQ[i+2])
-                    throw new Exception($"Mistake at index {i}");
-            }
-            Console.WriteLine("Collections are equal");
-
-
-            int repetitions = 1000;
-            long accum = 0;
-            Stopwatch sw = new Stopwatch();
-
-            sw = new Stopwatch();
-            sw.Start();
-            for (int rep = 0; rep < repetitions; ++rep)
-            {
-                DQ.Clear();
-            }
-            sw.Stop();
-            Console.WriteLine(sw.Elapsed);
-
-            sw = new Stopwatch();
-            sw.Start();
-            for(int rep = 0; rep < repetitions; ++rep)
-            {
-                for(int i = 0; i < bmarray.Length; ++i)
-                {
-                    accum += bmarray[i];
-                }
-                accum = 0;
-            }
-            sw.Stop();
-            var e1 = sw.Elapsed;
-
-            sw = new Stopwatch();
-            sw.Start();
-            for (int rep = 0; rep < repetitions; ++rep)
-            {
-                for (int i = 0; i < DQ.Count; ++i)
-                {
-                    accum += DQ[i];
-                }
-                accum = 0;
-            }
-            sw.Stop();
-            var e2 = sw.Elapsed;
-
-            Console.WriteLine(e1);
-            Console.WriteLine(e2);
-        }
-    }/**/
-}
