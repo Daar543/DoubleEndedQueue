@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -546,14 +546,14 @@ namespace DoubleEndedQueue
             if (reverseView)
                 return GetLeftEnumerator();
             else
-                return GetRightEnumerator();
+                return GetLeftEnumerator();
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
             if (reverseView)
                 return GetLeftEnumerator();
             else
-                return GetRightEnumerator();
+                return GetLeftEnumerator();
         }
 
         public int IndexOf(T item)
@@ -642,75 +642,41 @@ namespace DoubleEndedQueue
         {
             int i = this.firstBlock;
             int j = this.firstIndex;
-            this.beingEnumerated = true;
-            if (this.firstBlock == this.lastBlock)
-            {
-                for (j = firstIndex; j <= lastIndex; ++j)
+                for(j = firstIndex; j < blockSize; ++j)
                 {
                     yield return data[i][j];
                 }
-                this.beingEnumerated = false;
-                yield break;
+            for(i = firstBlock+1; i < lastBlock; ++i)
+            {
+                for(j = 0; j < blockSize; ++j)
+                {
+                    yield return data[i][j];
+                }
             }
-            else
-            {
-                for (j = firstIndex; j < blockSize; ++j)
-                {
-                    yield return data[i][j];
-                }
-                for (i = firstBlock + 1; i < lastBlock; ++i)
-                {
-                    for (j = 0; j < blockSize; ++j)
-                    {
-                        yield return data[i][j];
-                    }
-                }
-                i = this.lastBlock;
                 for (j = 0; j <= lastIndex; ++j)
                 {
                     yield return data[i][j];
                 }
-                this.beingEnumerated = false;
-                yield break;
-            }
-                
         }
         public IEnumerator<T> GetLeftEnumerator()
         {
             int i = this.lastBlock;
             int j = this.lastIndex;
-            this.beingEnumerated = true;
-            if (this.firstBlock == this.lastBlock)
-            {
-                for (j = lastIndex; j >= firstIndex; --j)
-                {
-                    yield return data[i][j];
-                }
-                this.beingEnumerated = false;
-                yield break;
-            }
-            else
-            {
                 for (j = lastIndex; j >= 0; --j)
                 {
                     yield return data[i][j];
                 }
-                for (i = lastBlock - 1; i > firstBlock; --i)
-                {
-                    for (j = blockSize - 1; j >= 0; --j)
-                    {
-                        yield return data[i][j];
-                    }
-                }
-                i = this.firstBlock;
-                for (j = blockSize - 1; j >= firstIndex; --j)
+            for (i = lastBlock - 1; i > firstBlock; --i)
+            {
+                for (j = blockSize-1; j >= 0; --j)
                 {
                     yield return data[i][j];
                 }
-                this.beingEnumerated = false;
-                yield break;
             }
-                
+                for (j = blockSize-1; j >= firstIndex; --j)
+                {
+                    yield return data[i][j];
+                }
         }
         
     }
