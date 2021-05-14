@@ -367,7 +367,11 @@ namespace DoubleEndedQueue
         private void _Insert(int index, T item)
         {
             CheckForEnumeration();
-
+            if (index == 0)
+            {
+                this.Prepend(item);
+                return;
+            }
             //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
 
             var (startBlock, startInd) = RecountIndex(index); //This throws exception if index not valid
@@ -830,7 +834,7 @@ namespace DoubleEndedQueue
             Test(DQ, bmlist);
             for (int i = maxlen; i >= maxlen / 4.3; --i)
             {
-                int randint = r.Next(0, 100);
+                int randint = r.Next(0, 200);
                 DQ.Remove(randint);
                 bmlist.Remove(randint);
             }
@@ -927,11 +931,12 @@ namespace DoubleEndedQueue
             Test(DQ, bmlist);
             for (int i = maxlen; i >= maxlen / 4.3; --i)
             {
-                int randint = r.Next(0, 100);
+                int randint = r.Next(0, 200);
                 DQ.Remove(randint);
                 bmlist.Remove(randint);
             }
             Test(DQ, bmlist);
+            cnt = DQ.Count;
             for (int i = 0; i < maxlen / 1.6; ++i)
             {
                 int randint = r.Next(0, 100);
@@ -966,13 +971,6 @@ namespace DoubleEndedQueue
                 int randint = r.Next(0, 10000);
                 DQ.Insert(1, randint);
                 bmlist.Insert(1, randint);
-            }
-            Test(DQ, bmlist);
-            for (int i = 0; i < DQ.Count; ++i)
-            {
-                int randint = r.Next(0, 10000);
-                DQ.RemoveAt(0);
-                bmlist.RemoveAt(0);
             }
             Test(DQ, bmlist);
             bmlist.Clear();

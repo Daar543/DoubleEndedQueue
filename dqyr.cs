@@ -17,40 +17,19 @@ using System.Diagnostics;
     }
     public class Deque<T> : IDeque<T>, IList<T>
     {
-        private readonly int blockSize = 32;
-        protected int firstIndex = 0;
-        protected int lastIndex = -1;
+        private const int blockSize = 32;
+        protected int firstIndex = blockSize/2;
+        protected int lastIndex = blockSize/2-1;
         protected int firstBlock = 0;
         protected int lastBlock = 0;
         private int blockCount { get => data.Length; }
         private float resizeFactor = 2;
-        protected bool beingEnumerated = false;
+        private bool beingEnumerated = false;
 
         private bool reverseView = false;
 
-
         private T[][] data;
-        /*public void Iterate(Action<T> clearance)
-        {
-            int i = firstBlock;
-            for (int j = firstIndex; j < blockSize; ++j)
-            {
-                clearance(data[i][j]);
-            }
-            for (i = firstBlock + 1; i < lastBlock; ++i)
-            {
-                for (int j = 0; j < blockSize; ++j)
-                {
-                    clearance(data[i][j]);
-                }
-            }
-            i = lastBlock;
-            for (int j = 0; j < lastIndex; ++j)
-            {
-                clearance(data[i][j]);
-            }
-            return;
-        }*/
+
         private void CheckForEnumeration()
         {
             if (this.beingEnumerated)
@@ -263,10 +242,10 @@ using System.Diagnostics;
                 this.data[i][j] = default;
             }
             firstBlock = data.Length / 2;
-            firstIndex = 0;
+            firstIndex = blockSize/2;
             data[firstBlock] = new T[blockSize];
             lastBlock = firstBlock;
-            lastIndex = -1;
+            lastIndex = firstIndex-1;
             return;
         }
 
@@ -390,9 +369,21 @@ using System.Diagnostics;
 
             //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
 
-
             var (startBlock, startInd) = RecountIndex(index); //This throws exception if index not valid
             this._Add(data[lastBlock][lastIndex]);//Increase the size by 1 and push the last item in there
+
+            if(reverseView) //Hotfix for offset in reverseView (adding one element increased the count of elements, so the starting block and index get moved
+            {
+                if (startInd == blockSize-1)
+                {
+                    startBlock += 1;
+                    startInd = 0;
+                }
+                else
+                {
+                    startInd += 1;
+                }                   
+            }
             //If moving only one block
             if (startBlock == lastBlock)
             {
@@ -721,4 +712,4 @@ using System.Diagnostics;
             return d;
         }
     }
-   
+ 
