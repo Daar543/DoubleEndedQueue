@@ -18,40 +18,19 @@ namespace DoubleEndedQueue
     }
     public class Deque<T> : IDeque<T>, IList<T>
     {
-        private readonly int blockSize = 32;
-        protected int firstIndex = 0;
-        protected int lastIndex = -1;
+        private const int blockSize = 32;
+        protected int firstIndex = blockSize/2;
+        protected int lastIndex = blockSize/2-1;
         protected int firstBlock = 0;
         protected int lastBlock = 0;
         private int blockCount { get => data.Length; }
         private float resizeFactor = 2;
-        protected bool beingEnumerated = false;
+        private bool beingEnumerated = false;
 
         private bool reverseView = false;
 
-
         private T[][] data;
-        /*public void Iterate(Action<T> clearance)
-        {
-            int i = firstBlock;
-            for (int j = firstIndex; j < blockSize; ++j)
-            {
-                clearance(data[i][j]);
-            }
-            for (i = firstBlock + 1; i < lastBlock; ++i)
-            {
-                for (int j = 0; j < blockSize; ++j)
-                {
-                    clearance(data[i][j]);
-                }
-            }
-            i = lastBlock;
-            for (int j = 0; j < lastIndex; ++j)
-            {
-                clearance(data[i][j]);
-            }
-            return;
-        }*/
+
         private void CheckForEnumeration()
         {
             if (this.beingEnumerated)
@@ -264,10 +243,10 @@ namespace DoubleEndedQueue
                 this.data[i][j] = default;
             }
             firstBlock = data.Length / 2;
-            firstIndex = 0;
+            firstIndex = blockSize/2;
             data[firstBlock] = new T[blockSize];
             lastBlock = firstBlock;
-            lastIndex = -1;
+            lastIndex = firstIndex-1;
             return;
         }
 
@@ -391,9 +370,21 @@ namespace DoubleEndedQueue
 
             //TODO: If index is lower than half of count, push the values to the left (reduce complexity)
 
-
             var (startBlock, startInd) = RecountIndex(index); //This throws exception if index not valid
             this._Add(data[lastBlock][lastIndex]);//Increase the size by 1 and push the last item in there
+
+            if(reverseView) //Hotfix for offset in reverseView (adding one element increased the count of elements, so the starting block and index get moved
+            {
+                if (startInd == blockSize-1)
+                {
+                    startBlock += 1;
+                    startInd = 0;
+                }
+                else
+                {
+                    startInd += 1;
+                }                   
+            }
             //If moving only one block
             if (startBlock == lastBlock)
             {
@@ -737,8 +728,13 @@ namespace DoubleEndedQueue
                 else
                 {
                     if (!Equals(x, x3))
-                        Console.WriteLine($"Difference in foreach");
-                    Console.WriteLine($"Difference at index {idx}: {x} vs {x2}");
+                    {
+                        throw new Exception("Difference in foreach");
+                    }
+                    else
+                    {
+                        throw new Exception($"Difference at index {idx}: {x} vs {x2}");
+                    }
                 }
                 idx += 1;
             }
@@ -792,26 +788,15 @@ namespace DoubleEndedQueue
 
 
 
-            Random r = new Random();
+            Random r = new Random(24);
             r.Next(1, 100);
 
             List<int> bmlist = new List<int>();
 
-            DQ.Add(0);
-            DQ.Add(1);
-            DQ.Add(2);
-            DQ.Add(3);
-
-            DQ.Insert(1, 6);
-            DQ.Remove(6);
-            DequeTest.GetReverseView(DQ);
-            DQ.Insert(1, 6);
-            DQ.Remove(6);
-
             DQ = new Deque<int>();
             int maxlen = 2000;
 
-
+            //Test normal
             Test(DQ, bmlist);
             for (int i = 0; i < 1000; ++i)
             {
@@ -859,8 +844,103 @@ namespace DoubleEndedQueue
                 DQ[randidx] = randint;
                 bmlist[randidx] = randint;
             }
-            DQ.InvertView();
+
+            Test(DQ, bmlist);
+            for (int i = maxlen; i >= maxlen / 4.3; --i)
+            {
+                int randint = r.Next(0, 10000);
+                DQ.Insert(0, randint);
+                bmlist.Insert(0, randint);
+            }
+            Console.WriteLine(DQ[^2]);
+            Test(DQ, bmlist);
+
+
+            for (int i = 0; i < maxlen / 10; ++i)
+            {
+                int randidx = r.Next(0, DQ.Count);
+                DQ.RemoveAt(randidx);
+                bmlist.RemoveAt(randidx);
+            }
+            Test(DQ, bmlist);
+            for (int i = maxlen; i >= maxlen / 4.3; --i)
+            {
+                int randint = r.Next(0, 10000);
+                DQ.Insert(1, randint);
+                bmlist.Insert(1, randint);
+            }
+            Test(DQ, bmlist);
+            for (int i = 0; i < DQ.Count; ++i)
+            {
+                int randint = r.Next(0, 10000);
+                DQ.RemoveAt(0);
+                bmlist.RemoveAt(0);
+            }
+            Test(DQ, bmlist);
+            bmlist.Clear();
+            DQ.Clear();
+            Console.WriteLine("---\n{0}", bmlist.Count);
+            Console.WriteLine("---\n{0}", DQ.Count);
+            Test(DQ, bmlist);
+            for (int i = 0; i < DQ.Count; ++i)
+            {
+                int randint = r.Next(0, 10000);
+                DQ.RemoveAt(0);
+                bmlist.RemoveAt(0);
+            }
+            //Reverse view
+
+            DequeTest.GetReverseView(DQ);
             Invert(ref bmlist);
+
+
+            Test(DQ, bmlist);
+            for (int i = 0; i < 1000; ++i)
+            {
+                int randint = r.Next(0, 100);
+                DQ.Add(randint);
+                bmlist.Add(randint);
+            }
+            Test(DQ, bmlist);
+            for (int i = 0; i < 100; ++i)
+            {
+                int idx = r.Next(-bmlist.Count, 2 * bmlist.Count);
+                try
+                {
+                    Console.WriteLine(DQ[idx]);
+
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    Console.WriteLine("-1");
+                }
+                try
+                {
+                    Console.WriteLine(bmlist[idx]);
+
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    Console.WriteLine("-1");
+                }
+            }
+            Test(DQ, bmlist);
+            for (int i = maxlen; i >= maxlen / 4.3; --i)
+            {
+                int randint = r.Next(0, 100);
+                DQ.Remove(randint);
+                bmlist.Remove(randint);
+            }
+            Test(DQ, bmlist);
+            for (int i = 0; i < maxlen / 1.6; ++i)
+            {
+                int randint = r.Next(0, 100);
+
+                int randidx = r.Next(0, cnt);
+                DQ[randidx] = randint;
+                bmlist[randidx] = randint;
+            }
+
             Test(DQ, bmlist);
 
 
@@ -906,13 +986,6 @@ namespace DoubleEndedQueue
                 DQ.RemoveAt(0);
                 bmlist.RemoveAt(0);
             }
-
-
-            DQ.Add(1);
-            DQ.IndexOf(5);
-            DQ.RemoveAt(0);
-            DQ.Remove(7);
-            DQ.Insert(5, 0);
         }
     }
 }
